@@ -18,10 +18,16 @@ REQUEST_TYPE = 'MQTT'
 MESSAGE_TYPE_PUB = 'PUB'
 PUBLISH_TIMEOUT = 5000
 
+# Dir of Certificates
+# Just a mock
+CA_CRT = "/l/disk0/kevin/Downloads/ca.crt"
+DEVICE_CRT = "/l/disk0/kevin/Downloads/admin_46b6c7.crt"
+PRIVATE_KEY = "/l/disk0/kevin/Downloads/admin_46b6c7.key"
+
 class MQTT_Client:
     
     def __init__(self):
-        self.mqttc = mqtt.Client()
+        self.mqttc = mqtt.Client("admin:46b6c7")
         self.mqttc.on_connect = self.on_connect
         self.mqttc.on_publish = self.locust_on_publish
         self.pubmmap = {}
@@ -30,18 +36,20 @@ class MQTT_Client:
         return self.mqttc
 
     def connect(self):
-        self.mqttc.connect("localhost", 1883, 60)
+        self.mqttc.tls_set(CA_CRT, DEVICE_CRT, PRIVATE_KEY)
+        self.mqttc.tls_insecure_set(True)
+        self.mqttc.connect("172.17.0.3", 8883, 60)
 
     def on_connect(self, client, userdata, flags, rc):
         print("Connected with result code "+str(rc))
     
-    def start_loop(self):
+    def loop(self):
         logging.info("Starting loop...")
-        self.mqttc.loop(0.5)
+        self.mqttc.loop(timeout=0.01)
 
     def publishing(self):
-        topic = "/{0}/{1}/attrs".format(TENANT, '4929cf')
-        payload = {'humidity': int(5.5)}
+        topic = "/{0}/{1}/attrs".format(TENANT, '46b6c7')
+        payload = {'int': 80}
 
         start_time = time.time()
 
@@ -66,7 +74,7 @@ class MQTT_Client:
                 )
 
                 logging.info("publish ERROR: err,mid:"+str(err)+","+str(mid)+"")
-                logging.error(err)
+                logging.error(res)
 
             self.pubmmap[mid] = {
                 'name': MESSAGE_TYPE_PUB, 

@@ -15,7 +15,7 @@ class IoT_Device(TaskSet):
     @seq_task(1)
     @task(2)
     def loop(self):
-        self.client_mqtt.start_loop()
+        self.client_mqtt.loop()
 
     @seq_task(2)
     @task(1)
